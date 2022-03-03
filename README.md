@@ -1,6 +1,6 @@
 # touchup
 
-A shell script used to update various types of packages on Debian-based systems at the same time. The script also cleans many often forgotten corners of the Linux system, making it usefull for troubleshooting.
+A shell script used to update various types of packages at the same time on Debian-based systems. The script also cleans many often forgotten corners of the Linux system, making it usefull for troubleshooting.
 
 #### To install:
 
