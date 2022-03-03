@@ -1,0 +1,191 @@
+#!/bin/bash
+
+OLDCONF=$(dpkg -l|grep "^rc"|awk '{print $2}')
+CURKERNEL=$(uname -r|sed 's/-*[a-z]//g'|sed 's/-386//g')
+LINUXPKG="linux-(image|headers|ubuntu-modules|restricted-modules)"
+#OLDKERNELS=$(dpkg -l|awk '{print $2}'|grep -E $LINUXPKG |grep -vE $ME>
+YELLOW="\033[1;33m"
+RED="\033[0;31m"
+ENDCOLOR="\033[0m"
+
+if [ $USER != root ]; then
+  echo -e $RED"Error: must be root"
+  echo -e $YELLOW"Exiting..."$ENDCOLOR
+  exit 0
+fi
+
+FILE_APT=/usr/bin/apt
+FILE_APTGET=/usr/bin/apt-get
+FILE_APTITUDE=/usr/bin/aptitude
+FILE_ATOM=/usr/bin/atom
+FILE_BETTERDISCORDCTL=/usr/bin/betterdiscordctl
+FILE_CARGO=/usr/bin/cargo
+FILE_DORELEASEUPGRADE=/usr/bin/do-release-upgrade
+FILE_DPKG=/usr/bin/dpkg
+FILE_FLATPAK=/usr/bin/flatpak
+FILE_FWUPDMGR=/usr/bin/fwupdmgr
+FILE_LIBREGAMING=/home/$USER/.local/bin/LibreGaming
+FILE_NPM=/usr/bin/npm
+FILE_PIP3=/usr/local/bin/pip3
+FILE_POPUPGRADE=/usr/bin/pop-upgrade
+FILE_SNAP=/usr/bin/snap
+FILE_TLDR=/usr/bin/tldr
+FILE_UPDATEGRUB=/usr/sbin/update-grub
+FILE_UPDATEGRUB2=/usr/sbin/update-grub2
+FILE_ZKG=/usr/bin/zkg
+FILE_ZSH=/usr/bin/zsh
+
+#Fix broken packages
+if test -f "$FILE_DPKG"; then
+    echo -e $YELLOW"Fixing broken packages(DPKG)..."$ENDCOLOR
+    dpkg --configure -a
+fi
+
+#Fetch update data
+if test -f "$FILE_APTGET"; then
+    echo -e $YELLOW"Fetching update data(APT)..."$ENDCOLOR
+    apt-get -qq update -y
+fi
+
+#Update and fix various system things
+if test -f "$FILE_APTGET"; then
+    echo -e $YELLOW"Updating packages(APT)..."$ENDCOLOR
+    apt-get -qq dist-upgrade -y
+    apt-get -qq --fix-missing --fix-broken install -y
+fi
+
+#Scan/Repair grub
+if test -f "$FILE_UPDATEGRUB"; then
+    echo -e $YELLOW"Scanning/Repairing grub..."$ENDCOLOR
+    update-grub 2>/dev/null
+
+    #Scan/Repair grub 2
+    if test -f "$FILE_UPDATEGRUB2"; then
+        echo -e $YELLOW"Scanning/Repairing grub 2..."$ENDCOLOR
+        update-grub2 2>/dev/null
+    fi
+fi
+
+#Find and update firmware
+if test -f "$FILE_FWUPDMGR"; then
+    echo -e $YELLOW"Looking for newest firmware updates..."$ENDCOLOR
+    sudo fwupdmgr get-devices >/dev/null
+    sudo fwupdmgr refresh --force >/dev/null 2>&1
+    sudo fwupdmgr get-updates 2>/dev/null
+    sudo fwupdmgr update 2>/dev/null
+fi
+
+#Update zsh if zsh is Installed
+if test -f "$FILE_ZSH"; then
+    echo -e $YELLOW"Updating zsh..."$ENDCOLOR
+    omz update >/dev/null
+fi
+
+#Upgrade to latest version (only works on Ubuntu)
+if test -f "$FILE_DORELEASEUPGRADE"; then
+    echo -e $YELLOW"Finding Newest 'Ubuntu' release..."$ENDCOLOR
+    sudo do-release-upgrade >/dev/null
+fi
+
+#Upgrade to latest version (only works on Pop! OS)
+if test -f "$FILE_POPUPGRADE"; then
+    echo -e $YELLOW"Finding Newest 'Pop! OS' release..."$ENDCOLOR
+    sudo pop-upgrade release upgrade >/dev/null
+fi
+
+#Update Flatpaks if flatpak is Installed
+if test -f "$FILE_FLATPAK"; then
+    echo -e $YELLOW"Updating Flatpaks..."$ENDCOLOR
+    flatpak update >/dev/null
+fi
+
+#Update Snaps if snapd is Installed
+if test -f "$FILE_SNAP"; then
+    echo -e $YELLOW"Updating Snaps..."$ENDCOLOR
+    sudo snap refresh >/dev/null
+fi
+
+#Update npm if npm is installed
+if test -f "$FILE_NPM"; then
+    echo -e $YELLOW"Updating npm packages..."$ENDCOLOR
+    npm update >/dev/null
+fi
+
+#Update Rust Packages if cargo is installed
+##I don't have cargo. Don't know how it works, support for this is VERY experimental
+if test -f "$FILE_CARGO"; then
+    echo -e $YELLOW"Updating Rust Packages (CARGO)..."$ENDCOLOR
+    cargo update >/dev/null
+    cargo fetch >/dev/null
+    cargo fix >/dev/null
+fi
+
+#Update Zeek Packages if zkg is installed
+##I don't often uze zkg, this could be made wrong, support for this is VERY experimental
+if test -f "$FILE_ZKG"; then
+    echo -e $YELLOW"Updating Zeek Packages (ZKG)..."$ENDCOLOR
+    zkg upgrade >/dev/null
+fi
+
+#Update pips if python3-pip is installed
+if test -f "$FILE_PIP3"; then
+    echo -e $YELLOW"Updating pips..."$ENDCOLOR
+    pip3 list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip3 install -U 2>/dev/null
+fi
+
+#Update LibreGaming Packages if LibreGaming is Installed
+if test -f "$FILE_LIBREGAMING"; then
+    echo -e $YELLOW"Updating LibreGaming packages..."$ENDCOLOR
+    LibreGaming --basic >/dev/null
+fi
+
+#Update Atom packages if Atom IDE is installed
+if test -f "$FILE_ATOM"; then
+    echo -e $YELLOW"Updating Atom IDE packages..."$ENDCOLOR
+    apm upgrade -y >/dev/null
+fi
+
+#Update betterdiscordctl packages if betterdiscordctl is installed
+if test -f "$FILE_BETTERDISCORDCTL"; then
+    echo -e $YELLOW"Updating betterdiscordctl..."$ENDCOLOR
+    betterdiscordctl install >/dev/null 2>&1
+fi
+
+#Update TLDR pages if TLDR is installed
+if test -f "$FILE_TLDR"; then
+    echo -e $YELLOW"Updating TLDR pages..."$ENDCOLOR
+    tldr -u >/dev/null 2>&1
+fi
+
+#Fix missing or broken dependencies
+if test -f "$FILE_APTGET"; then
+    echo -e $YELLOW"Fixing broken packages(APT)..."$ENDCOLOR
+    sudo apt-get -qq --fix-broken install -y
+fi
+
+#Empty all trashes
+echo -e $YELLOW"Emptying all trashes..."$ENDCOLOR
+rm -rf /home/*/.local/share/Trash/*/** &> /dev/null
+rm -rf /root/.local/share/Trash/*/** &> /dev/null
+
+#Remove useless stuff
+
+#Clean with aptitude (if aptitude is installed)
+if test -f "$FILE_APTITUDE"; then
+    echo -e $YELLOW"Cleaning apt cache..."$ENDCOLOR
+    aptitude clean >/dev/null
+
+    echo -e $YELLOW"Removing old config files..."$ENDCOLOR
+    sudo aptitude purge $OLDCONF -y >/dev/null
+fi
+
+if test -f "$FILE_APTGET"; then
+    echo -e $YELLOW"Autoremoving/Autocleaning/Autopurging(APT)..."$ENDCOLOR
+    sudo apt-get -qq autoremove -y --purge
+    sudo apt-get -qq autoclean -y
+    sudo apt-get -qq autopurge -y
+fi
+
+#Declare script end
+echo -e $YELLOW"Script Finished!"$ENDCOLOR
+
