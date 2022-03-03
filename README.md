@@ -6,6 +6,10 @@ A shell script used to update various types of packages at the same time on Debi
 
 $ ```sudo false ; wget https://raw.githubusercontent.com/ceresisonline/touchup/main/touchup ; sudo chmod +x touchup ; sudo mv touchup /usr/bin/touchup```
 
+#### To run:
+
+$ ```sudo touchup```
+
 #### Known Issues:
 - The script can only be called using sudo
 - The built-in OMZ updater is currenty not working
