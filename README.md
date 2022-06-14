@@ -4,7 +4,7 @@ A shell script used to update various types of packages at the same time on Debi
 
 #### To install:
 
-$ ```sudo false ; wget https://raw.githubusercontent.com/ceresisonline/touchup/main/touchup ; sudo chmod +x touchup ; sudo mv touchup /usr/bin/touchup```
+$ ```sudo false ; wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup ; sudo chmod +x touchup ; sudo mv touchup /usr/bin/touchup```
 
 #### To run:
 
