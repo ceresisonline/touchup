@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OLDCONF=$(dpkg -l|grep "^rc"|awk '{print $2}')
+#OLDCONF=$(dpkg -l|grep "^rc"|awk '{print $2}')
 CURKERNEL=$(uname -r|sed 's/-*[a-z]//g'|sed 's/-386//g')
 LINUXPKG="linux-(image|headers|ubuntu-modules|restricted-modules)"
 #OLDKERNELS=$(dpkg -l|awk '{print $2}'|grep -E $LINUXPKG |grep -vE $ME>
@@ -26,6 +26,7 @@ FILE_FLATPAK=/usr/bin/flatpak
 FILE_FWUPDMGR=/usr/bin/fwupdmgr
 FILE_LIBREGAMING=/home/$USER/.local/bin/LibreGaming
 FILE_NPM=/usr/bin/npm
+FILE_PACMAN=/usr/bin/pacman
 FILE_PIP3=/usr/local/bin/pip3
 FILE_POPUPGRADE=/usr/bin/pop-upgrade
 FILE_SNAP=/usr/bin/snap
@@ -35,23 +36,36 @@ FILE_UPDATEGRUB2=/usr/sbin/update-grub2
 FILE_ZKG=/usr/bin/zkg
 FILE_ZSH=/usr/bin/zsh
 
-#Fix broken packages
+#Fix broken packages (DPKG)
 if test -f "$FILE_DPKG"; then
     echo -e $YELLOW"Fixing broken packages(DPKG)..."$ENDCOLOR
     dpkg --configure -a
 fi
 
-#Fetch update data
+#Fetch update data (APT)
 if test -f "$FILE_APTGET"; then
     echo -e $YELLOW"Fetching update data(APT)..."$ENDCOLOR
     apt-get -qq update -y
 fi
 
-#Update and fix various system things
+#Fetch update data (PACMAN)
+if test -f "$FILE_PACMAN"; then
+    echo -e $YELLOW"Fetching update data(PACMAN)..."$ENDCOLOR
+    pacman -Syy --noconfirm 1>/dev/null  
+fi
+
+
+#Update and fix various system things (APT)
 if test -f "$FILE_APTGET"; then
     echo -e $YELLOW"Updating packages(APT)..."$ENDCOLOR
     apt-get -qq dist-upgrade -y
     apt-get -qq --fix-missing --fix-broken install -y
+fi
+
+#Update (PACMAN)
+if test -f "$FILE_PACMAN"; then
+    echo -e $YELLOW"Updating packages(PACMAN)..."$ENDCOLOR
+    pacman -Syu --noconfirm 1>/dev/null
 fi
 
 #Scan/Repair grub
@@ -112,7 +126,7 @@ if test -f "$FILE_NPM"; then
 fi
 
 #Update Rust Packages if cargo is installed
-##I don't have cargo. Don't know how it works, support for this is VERY experimental
+##I don't use cargo. And I don't know how it works. Support for this is VERY experimental
 if test -f "$FILE_CARGO"; then
     echo -e $YELLOW"Updating Rust Packages (CARGO)..."$ENDCOLOR
     cargo update >/dev/null
@@ -184,14 +198,19 @@ if test -f "$FILE_APTGET"; then
     apt-get -qq autoremove -y --purge
     apt-get -qq autoclean -y
     apt-get -qq autopurge -y
-fi
-
-if test -f "$FILE_APTGET"; then
     echo -e $YELLOW"Removing unnessesary configuration files(APT)..."$ENDCOLOR
     dpkg -l | grep "^rc" | awk '{print $2}' | sudo xargs dpkg --purge 2>/dev/null
     apt-get purge `dpkg --get-selections | grep deinstall | awk '{print $1}'` -qq
     dpkg -l | grep "^rc" | awk '{print $2}' | sudo xargs dpkg --purge 2>/dev/null
     apt-get purge `dpkg --get-selections | grep deinstall | awk '{print $1}'` -qq
+
+fi
+
+if test -f "$FILE_PACMAN"; then
+    echo -e $YELLOW"Removing orphaned packages(PACMAN)..."$ENDCOLOR
+    pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
+    echo -e $YELLOW"Removing unused package cache(PACMAN)..."$ENDCOLOR
+    pacman -Sc --noconfirm 1>/dev/null
 fi
 
 #Declare script end
