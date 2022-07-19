@@ -207,8 +207,10 @@ if test -f "$FILE_APTGET"; then
 fi
 
 if test -f "$FILE_PACMAN"; then
-    echo -e $YELLOW"Removing orphaned packages(PACMAN)..."$ENDCOLOR
-    pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
+    if [[ $(pacman -Qdtq) ]]; then
+        echo -e $YELLOW"Removing orphaned packages(PACMAN)..."$ENDCOLOR 
+        pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
+    fi
     echo -e $YELLOW"Removing unused package cache(PACMAN)..."$ENDCOLOR
     pacman -Sc --noconfirm 1>/dev/null
 fi
