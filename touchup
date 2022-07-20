@@ -38,33 +38,33 @@ FILE_ZSH=/usr/bin/zsh
 
 #Fix broken packages (DPKG)
 if test -f "$FILE_DPKG"; then
-    echo -e $YELLOW"Fixing broken packages(DPKG)..."$ENDCOLOR
+    echo -e $YELLOW"Fixing broken packages (DPKG)..."$ENDCOLOR
     dpkg --configure -a
 fi
 
 #Fetch update data (APT)
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Fetching update data(APT)..."$ENDCOLOR
+    echo -e $YELLOW"Fetching update data (APT)..."$ENDCOLOR
     apt-get -qq update -y
 fi
 
 #Fetch update data (PACMAN)
 if test -f "$FILE_PACMAN"; then
-    echo -e $YELLOW"Fetching update data(PACMAN)..."$ENDCOLOR
+    echo -e $YELLOW"Fetching update data (PACMAN)..."$ENDCOLOR
     pacman -Syy --noconfirm 1>/dev/null  
 fi
 
 
 #Update and fix various system things (APT)
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Updating packages(APT)..."$ENDCOLOR
+    echo -e $YELLOW"Updating packages (APT)..."$ENDCOLOR
     apt-get -qq dist-upgrade -y
     apt-get -qq --fix-missing --fix-broken install -y
 fi
 
 #Update (PACMAN)
 if test -f "$FILE_PACMAN"; then
-    echo -e $YELLOW"Updating packages(PACMAN)..."$ENDCOLOR
+    echo -e $YELLOW"Updating packages (PACMAN)..."$ENDCOLOR
     pacman -Syu --noconfirm 1>/dev/null
 fi
 
@@ -173,7 +173,7 @@ fi
 
 #Fix missing or broken dependencies
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Fixing broken packages(APT)..."$ENDCOLOR
+    echo -e $YELLOW"Fixing broken packages (APT)..."$ENDCOLOR
     apt-get -qq --fix-broken install -y
 fi
 
@@ -194,11 +194,11 @@ if test -f "$FILE_APTITUDE"; then
 fi
 
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Autoremoving/Autocleaning/Autopurging(APT)..."$ENDCOLOR
+    echo -e $YELLOW"Autoremoving/Autocleaning/Autopurging (APT)..."$ENDCOLOR
     apt-get -qq autoremove -y --purge
     apt-get -qq autoclean -y
     apt-get -qq autopurge -y
-    echo -e $YELLOW"Removing unnessesary configuration files(APT)..."$ENDCOLOR
+    echo -e $YELLOW"Removing unnessesary configuration files (APT)..."$ENDCOLOR
     dpkg -l | grep "^rc" | awk '{print $2}' | sudo xargs dpkg --purge 2>/dev/null
     apt-get purge `dpkg --get-selections | grep deinstall | awk '{print $1}'` -qq
     dpkg -l | grep "^rc" | awk '{print $2}' | sudo xargs dpkg --purge 2>/dev/null
@@ -208,10 +208,10 @@ fi
 
 if test -f "$FILE_PACMAN"; then
     if [[ $(pacman -Qdtq) ]]; then
-        echo -e $YELLOW"Removing orphaned packages(PACMAN)..."$ENDCOLOR 
+        echo -e $YELLOW"Removing orphaned packages (PACMAN)..."$ENDCOLOR 
         pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
     fi
-    echo -e $YELLOW"Removing unused package cache(PACMAN)..."$ENDCOLOR
+    echo -e $YELLOW"Removing unused package cache (PACMAN)..."$ENDCOLOR
     pacman -Sc --noconfirm 1>/dev/null
 fi
 
