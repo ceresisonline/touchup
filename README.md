@@ -18,4 +18,4 @@ $ ```sudo touchup```
 - The script can only be called using sudo
 - The built-in OMZ updater is currenty not working
 - Pacman doesn't show which packages are being updated. I highly recomend not using this on Arch.
-- RedHat support will maybe be added in the future. For now only Debian, Arch & MacOS are supported.
+- Support for dnf, yum, yay, & rpm will maybe be added in the future. For now this script can only utilize apm, apt-get, aptitude, betterdiscordctl, brew, cargo, flatpak, fwupdmgr, grub, libregaming, npm, pacman, pip3, snap, tldr, & zeek
