@@ -18,4 +18,4 @@ $ ```sudo touchup```
 - The script can only be called using sudo
 - The built-in OMZ updater is currenty not working
 - Pacman doesn't show which packages are being updated. I highly recomend not using this on Arch.
-- RedHat support will maybe be added in the future. For now only Debian, Arch & MacOS based systems are supported.
+- RedHat support will maybe be added in the future. For now only Debian, Arch & MacOS are supported.
