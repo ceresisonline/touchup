@@ -260,6 +260,7 @@ if test -f "$FILE_PACMAN"; then
     fi
     echo -e $YELLOW"Removing unused package cache (YAY)..."$ENDCOLOR
     sudo -u $NONSUDOUSER yay -Sc --noconfirm 1>/dev/null
+    rm -rf /home/$NONSUDOUSER/.cache/yay/vcs.json
   else
     if [[ $(pacman -Qdtq) ]]; then
       echo -e $YELLOW"Removing orphaned packages (PACMAN)..."$ENDCOLOR
