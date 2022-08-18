@@ -63,10 +63,15 @@ if test -f "$FILE_BREW"; then
     sudo -u $NONSUDOUSER brew update | grep --color=never updated
 fi
 
-#Fetch update data (PACMAN)
+#Fetch update data (PACMAN / YAY)
 if test -f "$FILE_PACMAN"; then
+  if command -v yay &> /dev/null; then
+    echo -e $YELLOW"Fetching update data (YAY)..."$ENDCOLOR
+    sudo -u $NONSUDOUSER yay -Syy --noconfirm 1>/dev/null
+  else
     echo -e $YELLOW"Fetching update data (PACMAN)..."$ENDCOLOR
     pacman -Syy --noconfirm 1>/dev/null
+  fi
 fi
 
 #Apply updates and fix various system things (APT)
@@ -82,10 +87,15 @@ if test -f "$FILE_BREW"; then
     sudo -u $NONSUDOUSER brew upgrade
 fi
 
-#Apply updates (PACMAN)
+#Apply updates (PACMAN / YAY)
 if test -f "$FILE_PACMAN"; then
+  if command -v yay &> /dev/null; then
+    echo -e $YELLOW"Updating packages (YAY)..."$ENDCOLOR
+    sudo -u $NONSUDOUSER yay -Syu --noconfirm 1>/dev/null ##Doesn't show any packages or progress. Need to fix ASAP
+  else
     echo -e $YELLOW"Updating packages (PACMAN)..."$ENDCOLOR
     pacman -Syu --noconfirm 1>/dev/null ##Doesn't show any packages or progress. Need to fix ASAP
+  fi
 fi
 
 #Scan/Repair grub
@@ -202,8 +212,8 @@ if test -f "$FILE_APTGET"; then
     apt-get -qq --fix-broken install -y
 fi
 
-#Empty all trashes ##Doesn't support MacOS
-echo -e $YELLOW"Emptying all trashes..."$ENDCOLOR
+#Empty trashes ##Doesn't support MacOS
+echo -e $YELLOW"Emptying trashes..."$ENDCOLOR
 rm -rf /home/*/.local/share/Trash/*/** &> /dev/null
 rm -rf /root/.local/share/Trash/*/** &> /dev/null
 
@@ -241,14 +251,23 @@ if test -f "$FILE_BREW"; then
     fi
 fi
 
-#Autoremove with PACMAN
+#Autoremove with PACMAN & YAY
 if test -f "$FILE_PACMAN"; then
+  if command -v yay &> /dev/null; then
+    if [[ $(sudo -u $NONSUDOUSER yay -Qdtq) ]]; then
+        echo -e $YELLOW"Removing orphaned packages (YAY)..."$ENDCOLOR
+        pacman -R $(sudo -u $NONSUDOUSER yay -Qdtq) --noconfirm 1>/dev/null
+    fi
+    echo -e $YELLOW"Removing unused package cache (YAY)..."$ENDCOLOR
+    sudo -u $NONSUDOUSER yay -Sc --noconfirm 1>/dev/null
+  else
     if [[ $(pacman -Qdtq) ]]; then
-        echo -e $YELLOW"Removing orphaned packages (PACMAN)..."$ENDCOLOR
-        pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
+      echo -e $YELLOW"Removing orphaned packages (PACMAN)..."$ENDCOLOR
+      pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
     fi
     echo -e $YELLOW"Removing unused package cache (PACMAN)..."$ENDCOLOR
     pacman -Sc --noconfirm 1>/dev/null
+  fi
 fi
 
 #Declare script end
