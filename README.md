@@ -4,15 +4,21 @@ A shell script used to update various types of packages at the same time on Debi
 ![Screenshot from 2022-08-01 23-12-23](https://user-images.githubusercontent.com/39637438/182283968-8d184755-06f3-4834-aa81-e04ef9dd07f8.png)
 #### To install on Linux:
 
-$ ```sudo false ; wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup ; sudo chmod +x touchup ; sudo mv touchup /usr/bin/touchup```
+	sudo false
+	wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup
+	sudo chmod +x touchup
+	sudo mv touchup /usr/bin/touchup
 
 #### To install on MacOS:
 
-$ ```sudo false ; wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup ; sudo chmod +x touchup ; sudo mv touchup /opt/homebrew/bin/touchup```
+	sudo false
+	wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup
+	sudo chmod +x touchup
+	sudo mv touchup /opt/homebrew/bin/touchup
 
 #### To run:
 
-$ ```sudo touchup```
+	sudo touchup
 
 #### Known Issues:
 - The script can only be called using sudo
