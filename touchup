@@ -11,7 +11,7 @@ YELLOW="\033[1;93m"
 RED="\033[0;31m"
 
 #Set Cyan color for script messages ##Used for when something is installing
-CYAN="\033[0;36m"
+CYAN="\033[0;96m"
 
 #End color on colored for script message
 ENDCOLOR="\033[0m"
