@@ -2,7 +2,7 @@
 
 A shell script used to update various types of packages at the same time on Debian, Arch, or MacOS. The script also cleans many often forgotten corners of the Linux system, making it useful for troubleshooting.
 
-If there's absolutely nothing to install, touchup should be quiet except for a start and stop notification. To show extra information, run touchup with the debug flag "-d".
+If there's absolutely nothing to install, touchup should be quiet except for a start and stop dialogue. To show extra information, run touchup with the debug flag "-d".
 
 ![Screenshot from 2022-08-23 22-26-01](https://user-images.githubusercontent.com/39637438/186305908-8184214d-7f91-498c-93cb-df18ae42dfe1.png)
 #### To install on Linux:
