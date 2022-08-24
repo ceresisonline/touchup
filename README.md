@@ -1,7 +1,10 @@
 # touchup
 
 A shell script used to update various types of packages at the same time on Debian, Arch, or MacOS. The script also cleans many often forgotten corners of the Linux system, making it useful for troubleshooting.
-![Screenshot from 2022-08-01 23-12-23](https://user-images.githubusercontent.com/39637438/182283968-8d184755-06f3-4834-aa81-e04ef9dd07f8.png)
+
+If there's absolutely nothing to install, touchup should be quiet except for a start and stop notification. To show extra information, run touchup with the debug flag "-d".
+
+![Screenshot from 2022-08-23 22-26-01](https://user-images.githubusercontent.com/39637438/186305908-8184214d-7f91-498c-93cb-df18ae42dfe1.png)
 #### To install on Linux:
 
 	sudo false
@@ -19,9 +22,14 @@ A shell script used to update various types of packages at the same time on Debi
 #### To run:
 
 	sudo touchup
+	
+#### To run with debug output
+	
+	sudo touchup -d
+
+![Screenshot from 2022-08-23 22-25-25](https://user-images.githubusercontent.com/39637438/186306182-f4422d39-4bba-445c-9eff-fa0a65e5f8c4.png)
 
 #### Known Issues:
-- The script can only be called using sudo
-- The built-in OMZ updater is currenty not working
-- Pacman and Yay don't show which packages are being updated. I highly recomend not using this script on Arch.
-- Support for dnf, yum, & rpm will maybe be added in the future. For now this script can only utilize apm, apt-get, aptitude, betterdiscordctl, brew, cargo, flatpak, fwupdmgr, grub, libregaming, npm, pacman, pip3, snap, tldr, yay, & zeek
+- Cargo, Pip3, and Zeek updates don't happen. This will hopefully be fixed very soon
+- Support for emptying trash and omz updates doesn't exist for MacOS. This might not be fixable. I'm working on it.
+- Support for dnf, yum, & rpm will maybe be added in the future. For now this script can only utilize apm, apt-get, aptitude, betterdiscordctl, brew, cargo, flatpak, fwupdmgr, grub, npm, pacman, pip3, snap, tldr, yay, & zeek
