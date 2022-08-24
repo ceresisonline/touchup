@@ -1,17 +1,21 @@
 #!/bin/bash
 
-###OLDCONF=$(dpkg -l|grep "^rc"|awk '{print $2}')
-CURKERNEL=$(uname -r|sed 's/-*[a-z]//g'|sed 's/-386//g')
-LINUXPKG="linux-(image|headers|ubuntu-modules|restricted-modules)"
+###CURKERNEL=$(uname -r|sed 's/-*[a-z]//g'|sed 's/-386//g')
+###LINUXPKG="linux-(image|headers|ubuntu-modules|restricted-modules)"
 ###OLDKERNELS=$(dpkg -l|awk '{print $2}'|grep -E $LINUXPKG |grep -vE $ME>
+
 #Set Yellow color for script messages
 YELLOW="\033[1;33m"
 #Set Red color for script messages
 RED="\033[0;31m"
 #End color on colored for script message
 ENDCOLOR="\033[0m"
-#Homebrew, (The package manager for MacOS) can't be run as root. This variable runs helps run commands as the original user
+
+#Defines user that ran the script
 NONSUDOUSER=$(echo $(logname))
+
+#Define the directory currently being used
+STARTING_DIRECTORY=$(pwd)
 
 #Open Superuser prompt
 if [ $USER != root ]; then
@@ -19,6 +23,22 @@ if [ $USER != root ]; then
   echo -e $YELLOW"Exiting..."$ENDCOLOR
   exit 0
 fi
+
+debug=false
+cowsay=false
+
+while getopts 'dc' OPTION; do
+  case "$OPTION" in
+    d)
+      debug=true
+      ;;
+    c)
+      if command -v cowsay &> /dev/null; then
+        cowsay=true
+      fi
+      ;;
+  esac
+done
 
 #Set script variables
 FILE_APT=/usr/bin/apt
@@ -45,56 +65,83 @@ FILE_ZKG=/usr/bin/zkg
 ###FILE_ZSH="$ZSH"
 ###FILE_ZSH=/usr/bin/zsh
 
-#Fix broken packages (DPKG)
+#Declare script start
+echo -e $YELLOW"Touchup Started!"$ENDCOLOR
+
+#Fix broken dpkg packages
 if test -f "$FILE_DPKG"; then
-    echo -e $YELLOW"Fixing broken packages (DPKG)..."$ENDCOLOR
+  if $debug; then
+    echo -e $YELLOW"Checking for broken dpkg packages..."$ENDCOLOR
+  fi
+  if [[ $(dpkg -l | grep ^..r) ]]; then
+    echo -e $YELLOW"Fixing broken dpkg packages..."$ENDCOLOR
     dpkg --configure -a
+  fi
 fi
 
-#Fetch update data (APT)
+#Fetch apt update data
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Fetching update data (APT)..."$ENDCOLOR
-    apt-get -qq update -y
+  if $debug; then
+    echo -e $YELLOW"Checking for apt updates..."$ENDCOLOR
+  fi
+  apt-get -qq update -y
 fi
 
-#Fetch update data (BREW)
+#Fetch brew update data
 if test -f "$FILE_BREW"; then
-    echo -e $YELLOW"Fetching update data (BREW)..."$ENDCOLOR
-    sudo -u $NONSUDOUSER brew update | grep --color=never updated
+  if $debug; then
+    echo -e $YELLOW"Checking for brew updates..."$ENDCOLOR
+  fi
+  sudo -u $NONSUDOUSER brew update | grep --color=never updated
 fi
 
-#Fetch update data (PACMAN / YAY)
+#Fetch pacman/yay update data
 if test -f "$FILE_PACMAN"; then
   if command -v yay &> /dev/null; then
-    echo -e $YELLOW"Fetching update data (YAY)..."$ENDCOLOR
+    if $debug; then
+      echo -e $YELLOW"Checking for yay updates..."$ENDCOLOR
+    fi
     sudo -u $NONSUDOUSER yay -Syy --noconfirm 1>/dev/null
   else
-    echo -e $YELLOW"Fetching update data (PACMAN)..."$ENDCOLOR
+    if $debug; then
+      echo -e $YELLOW"Checking for pacman updates..."$ENDCOLOR
+    fi
     pacman -Syy --noconfirm 1>/dev/null
   fi
 fi
 
-#Apply updates and fix various system things (APT)
+#Apply apt updates
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Updating packages (APT)..."$ENDCOLOR
+  if [[ $(sudo apt-get -s upgrade | grep "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.") ]]; then
+    false
+    ##Nothing relevant happens if this if statement is true, all files are already upgraded
+  else
+    echo -e $YELLOW"Updating apt packages..."$ENDCOLOR
     apt-get -qq dist-upgrade -y
     apt-get -qq --fix-missing --fix-broken install -y
+  fi
 fi
 
-#Apply updates (BREW)
+#Apply brew updates
 if test -f "$FILE_BREW"; then
-    echo -e $YELLOW"Updating packages (BREW)..."$ENDCOLOR
+  if [[ $(sudo -u $NONSUDOUSER brew upgrade -n) ]]; then
+    echo -e $YELLOW"Updating brew packages..."$ENDCOLOR
     sudo -u $NONSUDOUSER brew upgrade
+  fi
 fi
 
-#Apply updates (PACMAN / YAY)
+#Apply pacman/yay updates
 if test -f "$FILE_PACMAN"; then
   if command -v yay &> /dev/null; then
-    echo -e $YELLOW"Updating packages (YAY)..."$ENDCOLOR
-    sudo -u $NONSUDOUSER yay -Syu --noconfirm 1>/dev/null ##Doesn't show any packages or progress. Need to fix ASAP
+    if [[ $(sudo -u $NONSUDOUSER yay -Sup) ]]; then
+      echo -e $YELLOW"Updating yay packages..."$ENDCOLOR
+      sudo -u $NONSUDOUSER yay -Su --noconfirm
+    fi
   else
-    echo -e $YELLOW"Updating packages (PACMAN)..."$ENDCOLOR
-    pacman -Syu --noconfirm 1>/dev/null ##Doesn't show any packages or progress. Need to fix ASAP
+    if [[ $(pacman -Sup) ]]; then
+      echo -e $YELLOW"Updating pacman packages..."$ENDCOLOR
+      pacman -Su --noconfirm
+    fi
   fi
 fi
 
@@ -110,25 +157,27 @@ if test -f "$FILE_UPDATEGRUB"; then
     fi
 fi
 
-#Find and update firmware
+#Find and update firmware with fwupd
 if test -f "$FILE_FWUPDMGR"; then
-    echo -e $YELLOW"Looking for newest firmware updates..."$ENDCOLOR
-    fwupdmgr get-devices >/dev/null
-    fwupdmgr refresh --force >/dev/null 2>&1
-    fwupdmgr get-updates 2>/dev/null
-    fwupdmgr update 2>/dev/null
+  if [[ $(fwupdmgr get-updates 2>/dev/null) ]]; then
+    echo -e $YELLOW"Installing newest firmware updates..."$ENDCOLOR
+    fwupdmgr get-devices 1>/dev/null
+    fwupdmgr update
+  fi
 fi
 
-#Update omz if omz is installed (Currently not working)
-##maybe use "sudo -u $NONSUDOUSER"???
-##Figure out way to run below line as nonsudouser
-###if command -v /home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh &> /dev/null
-###then
-###    echo -e $YELLOW"Updating omz..."$ENDCOLOR
-###    ##omz update 2>/dev/null
-###    chmod +x /home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh
-###    sudo -u $NONSUDOUSER /home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh ##Still shows "Applied autostash." No matter what. Fix this
-###fi
+#Update omz if omz is installed ##Doesn't support MacOS
+if test -f "/home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for omz updates..."$ENDCOLOR
+  fi
+  cd /home/$NONSUDOUSER/.oh-my-zsh/
+  chmod +x tools/upgrade.sh
+  if [[ $(sudo -u $NONSUDOUSER /home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh | grep 'Hooray! Oh My Zsh has been updated!') ]]; then
+    echo -e $YELLOW"Updated Oh My Zsh..."$ENDCOLOR
+  fi
+  cd $STARTING_DIRECTORY
+fi
 
 #Upgrade to latest version (only works on Pop! OS)
 if test -f "$FILE_POPUPGRADE"; then
@@ -144,132 +193,236 @@ fi
 
 #Update Flatpaks if flatpak is Installed
 if test -f "$FILE_FLATPAK"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for flatpak updates..."$ENDCOLOR
+  fi
+  if [[ $(sudo -u $NONSUDOUSER flatpak update | grep -v "Looking for updates" | grep -v "Nothing to do.") ]]; then
     echo -e $YELLOW"Updating Flatpaks..."$ENDCOLOR
-    flatpak update >/dev/null
+    flatpak update -y >/dev/null
+  fi
 fi
 
 #Update Snaps if snapd is Installed
 if test -f "$FILE_SNAP"; then
+  if [[ $(snap refresh --list 2>/dev/null) ]]; then
     echo -e $YELLOW"Updating Snaps..."$ENDCOLOR
-    snap refresh >/dev/null
+    snap refresh
+  fi
 fi
 
-#Update npm if npm is installed
+#Update npm if npm is installed and has available updates
 if test -f "$FILE_NPM"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for npm updates..."$ENDCOLOR
+  fi
+  if [[ $(npm outdated) ]]; then
     echo -e $YELLOW"Updating npm packages..."$ENDCOLOR
     npm update >/dev/null
+  fi
 fi
 
 #Update Rust Packages if cargo is installed
 ##I don't use cargo. And I don't know how it works. Support for this is VERY experimental
-if test -f "$FILE_CARGO"; then
-    echo -e $YELLOW"Updating Rust Packages (CARGO)..."$ENDCOLOR
-    cargo update >/dev/null
-    cargo fetch >/dev/null
-    cargo fix >/dev/null
-fi
+###if test -f "$FILE_CARGO"; then
+###    echo -e $YELLOW"Updating Rust Packages (CARGO)..."$ENDCOLOR
+###    cargo update >/dev/null
+###    cargo fetch >/dev/null
+###    cargo fix >/dev/null
+###fi
 
 #Update Zeek Packages if zkg is installed
 ##I don't use zkg, this could be made wrong, support for this is VERY experimental
-if test -f "$FILE_ZKG"; then
-    echo -e $YELLOW"Updating Zeek Packages (ZKG)..."$ENDCOLOR
-    zkg upgrade >/dev/null
-fi
+###if test -f "$FILE_ZKG"; then
+###    echo -e $YELLOW"Updating Zeek Packages (ZKG)..."$ENDCOLOR
+###    zkg upgrade >/dev/null
+###fi
 
-#Update pips if pip3 is installed
+#Update pips if python-pip is installed
 if command -v pip3 &> /dev/null; then
+  if $debug; then
+    echo -e $YELLOW"Checking for pip updates..."$ENDCOLOR
+  fi
+  if [[ $(sudo -u $NONSUDOUSER pip list --outdated) ]]; then
     echo -e $YELLOW"Updating pips..."$ENDCOLOR
-    sudo -u $NONSUDOUSER pip3 list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip3 install -U
-fi
-
-#Update LibreGaming packages if LibreGaming is Installed
-if test -f "$FILE_LIBREGAMING"; then
-    echo -e $YELLOW"Updating LibreGaming packages..."$ENDCOLOR
-    LibreGaming --basic >/dev/null
+    #sudo -u $NONSUDOUSER pip3 list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip3 install -U
+  fi
 fi
 
 #Update Atom packages if Atom IDE is installed
 if command -v apm &> /dev/null; then
-    echo -e $YELLOW"Updating Atom IDE packages..."$ENDCOLOR
-    apm upgrade -y >/dev/null
+    sudo -u $NONSUDOUSER apm clean 1>/dev/null
+    if $debug; then
+      echo -e $YELLOW"Checking for apm updates..."$ENDCOLOR
+    fi
+    if [[ $(sudo -u $NONSUDOUSER apm outdated 2>/dev/null | grep -v "(0)" | grep -v "(empty)") ]]; then
+      echo -e $YELLOW"Updating Atom IDE packages..."$ENDCOLOR
+      sudo -u $NONSUDOUSER apm upgrade
+    fi
+fi
+
+#Apply betterdiscordctl if betterdiscordctl is not already applied
+if command -v betterdiscordctl &> /dev/null; then
+  if $debug; then
+    echo -e $YELLOW"Checking if betterdiscord is installed..."$ENDCOLOR
+  fi
+  if [[ $(sudo -u $NONSUDOUSER betterdiscordctl status | grep "injected: no") ]]; then
+    echo -e $YELLOW"Installing betterdiscord..."$ENDCOLOR
+    sudo -u $NONSUDOUSER betterdiscordctl install
+  fi
 fi
 
 #Update betterdiscordctl packages if betterdiscordctl is installed
 if command -v betterdiscordctl &> /dev/null; then
+  if [[ $(sudo -u $NONSUDOUSER betterdiscordctl self-upgrade 2>/dev/null) ]]; then
     echo -e $YELLOW"Updating betterdiscordctl..."$ENDCOLOR
-    sudo -u $NONSUDOUSER betterdiscordctl self-upgrade >/dev/null 2>&1
+    sudo -u $NONSUDOUSER betterdiscordctl self-upgrade
+  fi
 fi
 
-#Update TLDR pages if TLDR is installed
+#Update tldr pages if tldr is installed
 if command -v tldr &> /dev/null; then
-    echo -e $YELLOW"Updating TLDR pages..."$ENDCOLOR
-    sudo -u $NONSUDOUSER tldr -u | grep -v --color=never "Successfully updated local database" | grep -v "Updated cache for"
+  if $debug; then
+    echo -e $YELLOW"Updating tldr cache..."$ENDCOLOR
+  fi
+  sudo -u $NONSUDOUSER tldr -u 2>/dev/null | grep -v --color=never "Successfully updated local database" | grep -v "Updated cache for" | grep -v "Already up to date."
 fi
 
 #Fix missing or broken dependencies (APT)
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Fixing broken packages (APT)..."$ENDCOLOR
-    apt-get -qq --fix-broken install -y
+  echo -e $YELLOW"Fixing broken packages (APT)..."$ENDCOLOR
+  apt-get -qq --fix-broken install -y
 fi
 
-#Empty trashes ##Doesn't support MacOS
-echo -e $YELLOW"Emptying trashes..."$ENDCOLOR
-rm -rf /home/*/.local/share/Trash/*/** &> /dev/null
-rm -rf /root/.local/share/Trash/*/** &> /dev/null
+#Empty user trash ##Doesn't support MacOS
+if test -d "/home/$NONSUDOUSER/.local/share/Trash/"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for user trash..."$ENDCOLOR
+  fi
+  if [[ $(ls /home/$NONSUDOUSER/.local/share/Trash/) ]]; then
+    echo -e $YELLOW"Emptying user trash..."$ENDCOLOR
+    rm -rf /home/$NONSUDOUSER/.local/share/Trash/*
+  fi
+fi
 
-#Remove useless stuff
+#Empty root trash ##Doesn't support MacOS
+if test -d "/root/.local/share/Trash/"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for root trash..."$ENDCOLOR
+  fi
+  if [[ $(ls /root/.local/share/Trash/) ]]; then
+    echo -e $YELLOW"Emptying root user trash..."$ENDCOLOR
+    rm -rf /root/.local/share/Trash/*
+  fi
+fi
+
+##Remove useless stuff
 
 #Clean with aptitude (if aptitude is installed)
 if test -f "$FILE_APTITUDE"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for old apt packages..."$ENDCOLOR
+  fi
+  if [[ $(aptitude -s -y clean | grep -v "Del /"  ) ]]; then
     echo -e $YELLOW"Cleaning apt cache..."$ENDCOLOR
-    aptitude clean >/dev/null
-
-    echo -e $YELLOW"Removing old config files..."$ENDCOLOR
-    aptitude purge $OLDCONF -y >/dev/null
+    aptitude clean -y
+  fi
+  if [[ $(dpkg -l|grep "^rc"|awk '{print $2}') ]]; then
+      echo -e $YELLOW"Removing old config files..."$ENDCOLOR
+      aptitude purge $(dpkg -l|grep "^rc"|awk '{print $2}') -y
+  fi
 fi
 
-#Autoremove and clean around with APT
+#Autoremove and clean around with apt
 if test -f "$FILE_APTGET"; then
-    echo -e $YELLOW"Autoremoving/Autocleaning/Autopurging (APT)..."$ENDCOLOR
-    apt-get -qq autoremove -y --purge
-    apt-get -qq autoclean -y
-    apt-get -qq autopurge -y
-    echo -e $YELLOW"Removing unnessesary configuration files (APT)..."$ENDCOLOR
+  if [[ $(apt-get -qq autoclean -y --dry-run) ]]; then
+      echo -e $YELLOW"Autocleaning with apt..."$ENDCOLOR
+      apt-get -qq autoclean -y
+  fi
+  if [[ $(apt-get -qq autopurge -y --dry-run) ]]; then
+      echo -e $YELLOW"Autopurging with apt..."$ENDCOLOR
+      apt-get -qq autopurge -y
+  fi
+  if [[ $(dpkg -l | grep "^rc") ]]; then
+    echo -e $YELLOW"Removing unnessesary configuration files (DPKG)..."$ENDCOLOR
     dpkg -l | grep "^rc" | awk '{print $2}' | sudo xargs dpkg --purge 2>/dev/null
+  fi
+  if [[ $(dpkg --get-selections | grep deinstall) ]]; then
+    echo -e $YELLOW"Removing unnessesary apt configuration files..."$ENDCOLOR
     apt-get purge `dpkg --get-selections | grep deinstall | awk '{print $1}'` -qq
+  fi
 fi
 
-#Autoremove with BREW
+#Autoremove with brew
 if test -f "$FILE_BREW"; then
-    if [[ $(sudo -u $NONSUDOUSER brew autoremove -n) ]]; then
-        echo -e $YELLOW"Autoremoving old packages (BREW)..."$ENDCOLOR
-        sudo -u $NONSUDOUSER brew autoremove
-    fi
-    if [[ $(sudo -u $NONSUDOUSER brew cleanup -n) ]]; then
-        echo -e $YELLOW"Removing stale install files (BREW)..."$ENDCOLOR
-        sudo -u $NONSUDOUSER brew cleanup
-    fi
+  if $debug; then
+    echo -e $YELLOW"Checking for old packages (BREW)..."$ENDCOLOR
+  fi
+  if [[ $(sudo -u $NONSUDOUSER brew autoremove -n) ]]; then
+      echo -e $YELLOW"Autoremoving old brew packages..."$ENDCOLOR
+      sudo -u $NONSUDOUSER brew autoremove
+  fi
+  if $debug; then
+    echo -e $YELLOW"Checking for stale brew install files..."$ENDCOLOR
+  fi
+  if [[ $(sudo -u $NONSUDOUSER brew cleanup -n) ]]; then
+      echo -e $YELLOW"Removing stale install files (BREW)..."$ENDCOLOR
+      sudo -u $NONSUDOUSER brew cleanup | grep --color=never 'Removing: '
+  fi
 fi
 
-#Autoremove with PACMAN & YAY
+#Autoremove with flatpak
+if test -f $"FILE_FLATPAK"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for unused flatpaks..."$ENDCOLOR
+  fi
+  if [[ $(sudo -u $NONSUDOUSER flatpak uninstall --unused | grep -v "Nothing unused to uninstall") ]]; then
+      echo -e $YELLOW"Removing unused flatpaks..."$ENDCOLOR
+      sudo -u $NONSUDOUSER flatpak uninstall --unused --noninteractive -y
+  fi
+fi
+
+#Autoremove with pacman or yay
 if test -f "$FILE_PACMAN"; then
   if command -v yay &> /dev/null; then
+    if $debug; then
+      echo -e $YELLOW"Checking for orphaned yay packages..."$ENDCOLOR
+    fi
     if [[ $(sudo -u $NONSUDOUSER yay -Qdtq) ]]; then
-        echo -e $YELLOW"Removing orphaned packages (YAY)..."$ENDCOLOR
-        pacman -R $(sudo -u $NONSUDOUSER yay -Qdtq) --noconfirm 1>/dev/null
+        echo -e $YELLOW"Removing orphaned yay packages..."$ENDCOLOR
+        sudo -u $NONSUDOUSER yay -R $(sudo -u $NONSUDOUSER yay -Qdtq) --noconfirm
     fi
-    echo -e $YELLOW"Removing unused package cache (YAY)..."$ENDCOLOR
-    sudo -u $NONSUDOUSER yay -Sc --noconfirm 1>/dev/null
-    rm -rf /home/$NONSUDOUSER/.cache/yay/vcs.json
+    if $debug; then
+      echo -e $YELLOW"Checking for unused yay package cache..."$ENDCOLOR
+    fi
+    if [[ $(ls /var/cache/pacman/pkg/) ]]; then
+      echo -e $YELLOW"Removing unused yay package cache..."$ENDCOLOR
+      echo "removing": $(ls /var/cache/pacman/pkg/)
+      rm -rf /var/cache/pacman/pkg/*
+      sudo -u $NONSUDOUSER yay -Scc --noconfirm 1>/dev/null
+    fi
   else
-    if [[ $(pacman -Qdtq) ]]; then
-      echo -e $YELLOW"Removing orphaned packages (PACMAN)..."$ENDCOLOR
-      pacman -R $(pacman -Qdtq) --noconfirm 1>/dev/null
+    if $debug; then
+      echo -e $YELLOW"Checking for orphaned pacman packages..."$ENDCOLOR
     fi
-    echo -e $YELLOW"Removing unused package cache (PACMAN)..."$ENDCOLOR
-    pacman -Sc --noconfirm 1>/dev/null
+    if [[ $(pacman -Qdtq) ]]; then
+      echo -e $YELLOW"Removing orphaned pacman packages..."$ENDCOLOR
+      pacman -R $(pacman -Qdtq) --noconfirm
+    fi
+    if $debug; then
+      echo -e $YELLOW"Checking for unused pacman package cache..."$ENDCOLOR
+    fi
+    if [[ $(ls /var/cache/pacman/pkg/) ]]; then
+      echo -e $YELLOW"Removing unused pacman package cache..."$ENDCOLOR
+      echo "removing": $(ls /var/cache/pacman/pkg/)
+      rm -rf /var/cache/pacman/pkg/*
+      pacman -Scc --noconfirm 1>/dev/null
+    fi
   fi
 fi
 
 #Declare script end
-echo -e $YELLOW"Script Finished!"$ENDCOLOR
+if $cowsay; then
+  cowsay "Touchup Finished!"
+else
+  echo -e $YELLOW"Touchup Finished!"$ENDCOLOR
+fi
