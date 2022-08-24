@@ -5,7 +5,8 @@
 ###OLDKERNELS=$(dpkg -l|awk '{print $2}'|grep -E $LINUXPKG |grep -vE $ME>
 
 #Set Yellow color for script messages ##Used for debug messages
-YELLOW="\033[1;33m"
+YELLOW="\033[1;93m"
+
 #Set Red color for script messages
 RED="\033[0;31m"
 
@@ -403,7 +404,7 @@ if test -f "$FILE_PACMAN"; then
     fi
     if [[ $(ls /var/cache/pacman/pkg/) ]]; then
       echo -e $CYAN"Removing unused yay package cache..."$ENDCOLOR
-      echo "removing": $(ls /var/cache/pacman/pkg/)
+      echo "removing": $(echo $(ls /var/cache/pacman/pkg/ | cut -d "." -f 1))
       rm -rf /var/cache/pacman/pkg/*
       sudo -u $NONSUDOUSER yay -Scc --noconfirm 1>/dev/null
     fi
@@ -420,7 +421,7 @@ if test -f "$FILE_PACMAN"; then
     fi
     if [[ $(ls /var/cache/pacman/pkg/) ]]; then
       echo -e $CYAN"Removing unused pacman package cache..."$ENDCOLOR
-      echo "removing": $(ls /var/cache/pacman/pkg/)
+      echo "removing": $(echo $(ls /var/cache/pacman/pkg/ | cut -d "." -f 1))
       rm -rf /var/cache/pacman/pkg/*
       pacman -Scc --noconfirm 1>/dev/null
     fi
