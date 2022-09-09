@@ -23,7 +23,7 @@ If there's absolutely nothing to install, touchup should be quiet except for a s
 
 	sudo touchup
 	
-#### To run with debug output
+#### To run with debug output:
 	
 	sudo touchup -d
 
