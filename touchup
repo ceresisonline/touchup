@@ -306,9 +306,11 @@ if test -d "/home/$NONSUDOUSER/.local/share/Trash/"; then
   if $debug; then
     echo -e $YELLOW"Checking for user trash..."$ENDCOLOR
   fi
-  if [[ $(ls /home/$NONSUDOUSER/.local/share/Trash/) ]]; then
+  if [[ $(ls /home/$NONSUDOUSER/.local/share/Trash/files) ]]; then
     echo -e $CYAN"Emptying user trash..."$ENDCOLOR
-    rm -rf /home/$NONSUDOUSER/.local/share/Trash/*
+    echo "Removing from trash": $(echo $(ls /home/$NONSUDOUSER/.local/share/Trash/files))
+    rm -rf /home/$NONSUDOUSER/.local/share/Trash/files/*
+    rm -rf /home/$NONSUDOUSER/.local/share/Trash/info/*
   fi
 fi
 
@@ -317,9 +319,11 @@ if test -d "/root/.local/share/Trash/"; then
   if $debug; then
     echo -e $YELLOW"Checking for root trash..."$ENDCOLOR
   fi
-  if [[ $(ls /root/.local/share/Trash/) ]]; then
+  if [[ $(ls /root/.local/share/Trash/files) ]]; then
     echo -e $CYAN"Emptying root user trash..."$ENDCOLOR
-    rm -rf /root/.local/share/Trash/*
+    echo "Removing from trash": $(echo $(ls /root/.local/share/Trash/files))
+    rm -rf /root/.local/share/Trash/files/*
+    rm -rf /root/.local/share/Trash/info/*
   fi
 fi
 
@@ -404,7 +408,7 @@ if test -f "$FILE_PACMAN"; then
     fi
     if [[ $(ls /var/cache/pacman/pkg/) ]]; then
       echo -e $CYAN"Removing unused yay package cache..."$ENDCOLOR
-      echo "removing": $(echo $(ls /var/cache/pacman/pkg/ | cut -d "." -f 1))
+      echo "Removing": $(echo $(ls /var/cache/pacman/pkg/ | cut -d "." -f 1))
       rm -rf /var/cache/pacman/pkg/*
       sudo -u $NONSUDOUSER yay -Scc --noconfirm 1>/dev/null
     fi
