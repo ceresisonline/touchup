@@ -171,7 +171,7 @@ if test -f "$FILE_FWUPDMGR"; then
   fi
 fi
 
-#Update omz if omz is installed ##Doesn't support MacOS
+#Update omz if omz is installed on Linux
 if test -f "/home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
   if $debug; then
     echo -e $YELLOW"Checking for omz updates..."$ENDCOLOR
@@ -179,6 +179,19 @@ if test -f "/home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
   cd /home/$NONSUDOUSER/.oh-my-zsh/
   chmod +x tools/upgrade.sh
   if [[ $(sudo -u $NONSUDOUSER /home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh | grep 'Hooray! Oh My Zsh has been updated!') ]]; then
+    echo -e $CYAN"Updated Oh My Zsh..."$ENDCOLOR
+  fi
+  cd $STARTING_DIRECTORY
+fi
+
+#Update omz if omz is installed on MacOS
+if test -f "/Users/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for omz updates..."$ENDCOLOR
+  fi
+  cd /Users/$NONSUDOUSER/.oh-my-zsh/
+  chmod +x tools/upgrade.sh
+  if [[ $(sudo -u $NONSUDOUSER /Users/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh 2>/dev/null | grep 'Hooray! Oh My Zsh has been updated!') ]]; then
     echo -e $CYAN"Updated Oh My Zsh..."$ENDCOLOR
   fi
   cd $STARTING_DIRECTORY
