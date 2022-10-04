@@ -51,7 +51,7 @@ FILE_APTGET=/usr/bin/apt-get
 FILE_APTITUDE=/usr/bin/aptitude
 ###FILE_ATOM=/usr/bin/atom
 ###FILE_BETTERDISCORDCTL=/usr/local/bin/betterdiscordctl
-FILE_BREW=/opt/homebrew/bin/brew
+###FILE_BREW=/opt/homebrew/bin/brew
 FILE_CARGO=/usr/bin/cargo
 FILE_DORELEASEUPGRADE=/usr/bin/do-release-upgrade
 FILE_DPKG=/usr/bin/dpkg
@@ -93,7 +93,7 @@ if test -f "$FILE_APTGET"; then
 fi
 
 #Fetch brew update data
-if test -f "$FILE_BREW"; then
+if command -v brew &> /dev/null; then
   if $debug; then
     echo -e $YELLOW"Checking for brew updates..."$ENDCOLOR
   fi
@@ -128,7 +128,7 @@ if test -f "$FILE_APTGET"; then
 fi
 
 #Apply brew updates
-if test -f "$FILE_BREW"; then
+if command -v brew &> /dev/null; then
   if [[ $(sudo -u $NONSUDOUSER brew upgrade -n) ]]; then
     echo -e $CYAN"Updating brew packages..."$ENDCOLOR
     sudo -u $NONSUDOUSER brew upgrade
@@ -378,7 +378,7 @@ if test -f "$FILE_APTGET"; then
 fi
 
 #Autoremove with brew
-if test -f "$FILE_BREW"; then
+if command -v brew &> /dev/null; then
   if $debug; then
     echo -e $YELLOW"Checking for old packages (BREW)..."$ENDCOLOR
   fi
