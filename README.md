@@ -8,16 +8,16 @@ If there's absolutely nothing to install, touchup should be quiet except for a s
 #### To install on Linux:
 
 	sudo false
-	wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup
-	sudo chmod +x touchup
-	sudo mv touchup /usr/bin/touchup
+	wget -P /tmp https://raw.githubusercontent.com/sq1000000/touchup/main/touchup
+	sudo chmod +x /tmp/touchup
+	sudo mv /tmp/touchup /usr/bin/touchup
 
 #### To install on MacOS:
 
 	sudo false
-	wget https://raw.githubusercontent.com/sq1000000/touchup/main/touchup
-	sudo chmod +x touchup
-	sudo mv touchup /opt/homebrew/bin/touchup
+	wget -P /tmp https://raw.githubusercontent.com/sq1000000/touchup/main/touchup
+	sudo chmod +x /tmp/touchup
+	sudo mv /tmp/touchup /usr/local/bin/touchup
 
 #### To run:
 
