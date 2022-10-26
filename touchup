@@ -51,7 +51,7 @@ FILE_APTGET=/usr/bin/apt-get
 FILE_APTITUDE=/usr/bin/aptitude
 ###FILE_ATOM=/usr/bin/atom
 ###FILE_BETTERDISCORDCTL=/usr/local/bin/betterdiscordctl
-FILE_BREW=/opt/homebrew/bin/brew
+###FILE_BREW=/opt/homebrew/bin/brew
 FILE_CARGO=/usr/bin/cargo
 FILE_DORELEASEUPGRADE=/usr/bin/do-release-upgrade
 FILE_DPKG=/usr/bin/dpkg
@@ -93,7 +93,7 @@ if test -f "$FILE_APTGET"; then
 fi
 
 #Fetch brew update data
-if test -f "$FILE_BREW"; then
+if command -v brew &> /dev/null; then
   if $debug; then
     echo -e $YELLOW"Checking for brew updates..."$ENDCOLOR
   fi
@@ -106,7 +106,7 @@ if test -f "$FILE_PACMAN"; then
     if $debug; then
       echo -e $YELLOW"Checking for yay updates..."$ENDCOLOR
     fi
-    sudo -u $NONSUDOUSER yay -Syy --noconfirm --devel 1>/dev/null
+    sudo -u $NONSUDOUSER yay -Syy --devel --noconfirm 1>/dev/null
   else
     if $debug; then
       echo -e $YELLOW"Checking for pacman updates..."$ENDCOLOR
@@ -128,7 +128,7 @@ if test -f "$FILE_APTGET"; then
 fi
 
 #Apply brew updates
-if test -f "$FILE_BREW"; then
+if command -v brew &> /dev/null; then
   if [[ $(sudo -u $NONSUDOUSER brew upgrade -n) ]]; then
     echo -e $CYAN"Updating brew packages..."$ENDCOLOR
     sudo -u $NONSUDOUSER brew upgrade
@@ -171,7 +171,7 @@ if test -f "$FILE_FWUPDMGR"; then
   fi
 fi
 
-#Update omz if omz is installed ##Doesn't support MacOS
+#Update omz if omz is installed on Linux
 if test -f "/home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
   if $debug; then
     echo -e $YELLOW"Checking for omz updates..."$ENDCOLOR
@@ -179,6 +179,19 @@ if test -f "/home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
   cd /home/$NONSUDOUSER/.oh-my-zsh/
   chmod +x tools/upgrade.sh
   if [[ $(sudo -u $NONSUDOUSER /home/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh | grep 'Hooray! Oh My Zsh has been updated!') ]]; then
+    echo -e $CYAN"Updated Oh My Zsh..."$ENDCOLOR
+  fi
+  cd $STARTING_DIRECTORY
+fi
+
+#Update omz if omz is installed on MacOS
+if test -f "/Users/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh"; then
+  if $debug; then
+    echo -e $YELLOW"Checking for omz updates..."$ENDCOLOR
+  fi
+  cd /Users/$NONSUDOUSER/.oh-my-zsh/
+  chmod +x tools/upgrade.sh
+  if [[ $(sudo -u $NONSUDOUSER /Users/$NONSUDOUSER/.oh-my-zsh/tools/upgrade.sh 2>/dev/null | grep 'Hooray! Oh My Zsh has been updated!') ]]; then
     echo -e $CYAN"Updated Oh My Zsh..."$ENDCOLOR
   fi
   cd $STARTING_DIRECTORY
@@ -365,7 +378,7 @@ if test -f "$FILE_APTGET"; then
 fi
 
 #Autoremove with brew
-if test -f "$FILE_BREW"; then
+if command -v brew &> /dev/null; then
   if $debug; then
     echo -e $YELLOW"Checking for old packages (BREW)..."$ENDCOLOR
   fi
