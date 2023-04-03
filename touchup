@@ -259,13 +259,13 @@ fi
 ###fi
 
 #Update pips if python-pip is installed
-if command -v pip3 &> /dev/null; then
+if command -v 'pip' &> /dev/null; then
   if $debug; then
     echo -e $YELLOW"Checking for pip updates..."$ENDCOLOR
   fi
   if [[ $(sudo -u $NONSUDOUSER pip list --outdated) ]]; then
     echo -e $CYAN"Updating pips..."$ENDCOLOR
-    #sudo -u $NONSUDOUSER pip3 list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip3 install -U
+    sudo -u $NONSUDOUSER pip list --outdated | awk '{print $1}' | xargs -n1 pip install -U | grep -v -E 'Requirement already satisfied|Defaulting to user installation because normal'
   fi
 fi
 
