@@ -281,6 +281,25 @@ if command -v apm &> /dev/null; then
     fi
 fi
 
+#Update Gnome Extensions if gnome-extensions is installed
+if command -v gnome-extensions &> /dev/null; then
+  if $debug; then
+    echo -e $YELLOW"Checking for gnome extension updates..."$ENDCOLOR
+  fi
+
+  gnome-extensions list | awk '{print $1}' | while read -r extension; do
+      version=$(gnome-extensions info "$extension" | grep version | awk '{print $2}')
+      update=$(gnome-extensions info "$extension" | grep -q outdated && echo true || echo false)
+      if $debug; then
+        echo -e $CYAN"Updating gnome extensions..."$ENDCOLOR
+      fi
+      if [ "$update" = true ]; then
+          echo "Updating $extension to version $version"
+          gnome-extensions update "$extension"
+      fi
+  done
+fi
+
 #Apply betterdiscordctl if betterdiscordctl is not already applied
 if command -v betterdiscordctl &> /dev/null; then
   if $debug; then
