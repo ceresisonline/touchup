@@ -287,7 +287,7 @@ if command -v gnome-extensions &> /dev/null; then
     echo -e $YELLOW"Checking for gnome extension updates..."$ENDCOLOR
   fi
 
-  gnome-extensions list | awk '{print $1}' | while read -r extension; do
+  su $NONSUDOUSER -s /usr/bin/gnome-extensions list | awk '{print $1}' | while read -r extension; do
       version=$(gnome-extensions info "$extension" | grep version | awk '{print $2}')
       update=$(gnome-extensions info "$extension" | grep -q outdated && echo true || echo false)
       if $debug; then
@@ -295,7 +295,7 @@ if command -v gnome-extensions &> /dev/null; then
       fi
       if [ "$update" = true ]; then
           echo "Updating $extension to version $version"
-          gnome-extensions update "$extension"
+         su $NONSUDOUSER -s /usr/bin/gnome-extensions update "$extension"
       fi
   done
 fi
