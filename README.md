@@ -32,4 +32,4 @@ If there's absolutely nothing to install, touchup should be quiet except for a s
 #### Known Issues:
 - Cargo, Pip3, and Zeek updates don't happen. This will hopefully be fixed very soon
 - Support for emptying the trash doesn't exist for MacOS. This might not be fixable. I'm working on it.
-- Support for dnf, yum, & rpm will maybe be added in the future. For now this script can only utilize apm, apt-get, aptitude, betterdiscordctl, brew, cargo, flatpak, fwupdmgr, grub, npm, pacman, pip3, snap, tldr, yay, & zeek
+- Support for dnf, yum, & rpm will maybe be added in the future. For now this script can only utilize apm, apt-get, aptitude, betterdiscordctl, brew, cargo, flatpak, fwupdmgr, gnome-extensions, grub, npm, pacman, pip3, snap, tldr, yay, & zeek
